@@ -1,0 +1,6 @@
+feeds:
+  - type: html
+    link: https://www.athome.co.jp/kodate/chuko/kyoto/list/?pref=26&stations=kintetsukyoto_6560-6560120_6560130_6560100_6560110_6560140&basic=kb208,kp299,kp001,kp108,km015,km018,km019,km020,km023,km024,km026,kt114,kt424,kf001,kl002,ke005,kn005,kj001&kod=&q=1&sort=95&limit=30
+    liSelector: athome-csite-pc-part-bukken-card-ryutsu-sell-living
+    titleSelector: .title-wrap__title-text
+    contentSelector: .card-box-inner__detail
