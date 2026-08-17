@@ -1,0 +1,47 @@
+name: Production Deploy
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  filter:
+    runs-on: ubuntu-latest
+    outputs:
+      deployment: ${{ steps.path-filter.outputs.deployment }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: path-filter
+        with:
+          filters: |
+            deployment:
+              - "deployment/**"
+              - ".github/workflows/prd-deploy.yaml"
+  tf-apply:
+    runs-on: ubuntu-latest
+    needs: filter
+    if: needs.filter.outputs.deployment == 'true'
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      - name: configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@master
+        with:
+          aws-region: ap-northeast-1
+          role-to-assume: arn:aws:iam::891377239454:role/rssplus-github-actions-main
+          role-session-name: GitHubActions
+      - name: get-caller-identity is allowed to run on role.
+        shell: bash
+        run: aws sts get-caller-identity
+      - name: Terraform Init
+        run: cd deployment/ && terraform init
+        shell: bash
+      - name: Terraform Apply
+        run: cd deployment/ && terraform apply -auto-approve
+        id: tf-apply
+        shell: bash
