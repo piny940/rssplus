@@ -68,7 +68,7 @@ jobs:
           context: '.'
           file: ./Dockerfile
           tags: |
-            ghcr.io/okabelab/rssplus:main-${{ github.sha }}-${{ steps.set-now.outputs.now }}
-            ghcr.io/okabelab/rssplus:latest
+            ghcr.io/piny940/rssplus:main-${{ github.sha }}-${{ steps.set-now.outputs.now }}
+            ghcr.io/piny940/rssplus:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
