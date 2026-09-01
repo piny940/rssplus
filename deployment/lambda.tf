@@ -34,3 +34,7 @@ resource "aws_scheduler_schedule" "notify_once" {
     role_arn = aws_iam_role.event_bridge_notify_once.arn
   }
 }
+resource "aws_cloudwatch_log_group" "notify_once" {
+  name = "/aws/lambda/${aws_lambda_function.notify_once.function_name}"
+  retention_in_days = 30
+}
