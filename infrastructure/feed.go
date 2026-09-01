@@ -32,12 +32,16 @@ const (
 	errorBodyMaxLength = 512
 )
 
-type HTMLListFeedFetcher struct {
+type HtmlListFeedFetcher struct {
 }
 
-var _ domain.IHtmlListFeedFetcher = &HTMLListFeedFetcher{}
+var _ domain.IHtmlListFeedFetcher = &HtmlListFeedFetcher{}
 
-func (h *HTMLListFeedFetcher) GetItems(feed *domain.HtmlListFeed) (*domain.FeedItems, error) {
+func NewHtmlListFeedFetcher() *HtmlListFeedFetcher {
+	return &HtmlListFeedFetcher{}
+}
+
+func (h *HtmlListFeedFetcher) GetItems(feed *domain.HtmlListFeed) (*domain.FeedItems, error) {
 	wait := initialRetryWait
 	for attempt := 1; ; attempt++ {
 		items, err := h.getItemsOnce(feed)
@@ -49,7 +53,7 @@ func (h *HTMLListFeedFetcher) GetItems(feed *domain.HtmlListFeed) (*domain.FeedI
 	}
 }
 
-func (h *HTMLListFeedFetcher) getItemsOnce(feed *domain.HtmlListFeed) (*domain.FeedItems, error) {
+func (h *HtmlListFeedFetcher) getItemsOnce(feed *domain.HtmlListFeed) (*domain.FeedItems, error) {
 	req, err := http.NewRequest(http.MethodGet, feed.Link, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)

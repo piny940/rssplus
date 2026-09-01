@@ -1,37 +1,27 @@
-package main
+package lambdaonce
 
 import (
-	"flag"
+	"context"
+	"fmt"
 	"log"
-	"os"
 	"rssplus/cmd"
 	"rssplus/domain"
 	"rssplus/infrastructure"
+	"rssplus/samples"
 	"rssplus/usecase"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"go.yaml.in/yaml/v4"
 )
 
-var (
-	confFile string
-)
-
 func main() {
-	flag.StringVar(&confFile, "c", "", "Path to config file")
-	flag.Parse()
-	if confFile == "" {
-		log.Fatal("config file path not provided")
-	}
-	f, err := os.Open(confFile)
-	if err != nil {
-		log.Fatalf("failed to open config file: %v", err)
-	}
-	defer f.Close()
-	d := yaml.NewDecoder(f)
+	lambda.Start(handleRequest)
+}
+
+func handleRequest(_ context.Context) error {
 	var conf cmd.Config
-	err = d.Decode(&conf)
-	if err != nil {
-		log.Fatalf("failed to decode config file: %v", err)
+	if err := yaml.Unmarshal(samples.Simple, &conf); err != nil {
+		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 	var feeds []domain.Feed
 	for _, f := range conf.Feeds {
@@ -53,4 +43,5 @@ func main() {
 	if err := uc.NotifyNewItems(feeds); err != nil {
 		log.Fatalf("failed to notify new items: %v", err)
 	}
+	return nil
 }
