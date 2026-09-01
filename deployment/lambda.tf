@@ -18,3 +18,19 @@ resource "aws_lambda_function" "notify_once" {
 
   architectures = ["x86_64"]
 }
+resource "aws_scheduler_schedule" "notify_once" {
+  name       = "rssplus_notify_once"
+  group_name = "rssplus"
+
+  flexible_time_window {
+    mode = "FLEXIBLE"
+    maximum_window_in_minutes = 5
+  }
+
+  schedule_expression = "rate(1 hours)"
+
+  target {
+    arn      = aws_lambda_function.notify_once.arn
+    role_arn = aws_iam_role.event_bridge_notify_once.arn
+  }
+}
