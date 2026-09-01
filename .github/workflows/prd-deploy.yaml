@@ -8,33 +8,28 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  filter:
+  deploy:
     runs-on: ubuntu-latest
-    outputs:
-      deployment: ${{ steps.path-filter.outputs.deployment }}
     steps:
       - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v3
-        id: path-filter
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          filters: |
-            deployment:
-              - "deployment/**"
-              - ".github/workflows/prd-deploy.yaml"
-  tf-apply:
-    runs-on: ubuntu-latest
-    needs: filter
-    if: needs.filter.outputs.deployment == 'true'
-    steps:
-      - uses: actions/checkout@v6
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+          go-version-file: go.mod
+      - name: Build Lambda binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -tags lambda.norpc -o deployment/build/bootstrap ./cmd/once
+          chmod +x deployment/build/bootstrap
+        shell: bash
       - name: configure-aws-credentials
         uses: aws-actions/configure-aws-credentials@master
         with:
           aws-region: ap-northeast-1
           role-to-assume: arn:aws:iam::891377239454:role/rssplus-github-actions-main
           role-session-name: GitHubActions
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
       - name: Terraform Init
         run: cd deployment/ && terraform init
         shell: bash
@@ -42,36 +37,3 @@ jobs:
         run: cd deployment/ && terraform apply -auto-approve
         id: tf-apply
         shell: bash
-
-  prd-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set now time to env
-        id: set-now
-        run: |
-          NOW=$(date +'%Y%m%d%H%M%S')
-          echo "now=$NOW" >> $GITHUB_OUTPUT
-      - name: configure-aws-credentials
-        uses: aws-actions/configure-aws-credentials@master
-        with:
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::891377239454:role/rssplus-github-actions-main
-          role-session-name: GitHubActions
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registry-type: public
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build and push Docker Image
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          context: '.'
-          file: ./Dockerfile
-          tags: |
-            public.ecr.aws/d8x1i7m1/rssplus:main-${{ github.sha }}-${{ steps.set-now.outputs.now }}
-            public.ecr.aws/d8x1i7m1/rssplus:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max

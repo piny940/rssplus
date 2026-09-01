@@ -1,8 +1,17 @@
+data "archive_file" "notify_once" {
+  type        = "zip"
+  source_file = "${path.module}/build/bootstrap"
+  output_path = "${path.module}/build/notify_once.zip"
+}
+
 resource "aws_lambda_function" "notify_once" {
   function_name = "rssplus_notify_once"
   role          = aws_iam_role.lambda_notify_once.arn
-  package_type  = "Image"
-  image_uri     = "${aws_ecrpublic_repository.rssplus.repository_uri}:latest"
+
+  runtime          = "provided.al2023"
+  handler          = "bootstrap"
+  filename         = data.archive_file.notify_once.output_path
+  source_code_hash = data.archive_file.notify_once.output_base64sha256
 
   memory_size = 512
   timeout     = 60

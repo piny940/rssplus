@@ -38,3 +38,6 @@ override.tf.json
 terraform.rc
 
 # End of https://www.toptal.com/developers/gitignore/api/terraform
+
+# Lambda deployment package built by CI / local builds
+build/
