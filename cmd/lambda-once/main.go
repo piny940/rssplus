@@ -1,9 +1,8 @@
-package lambdaonce
+package main
 
 import (
 	"context"
 	"fmt"
-	"log"
 	"rssplus/cmd"
 	"rssplus/domain"
 	"rssplus/infrastructure"
@@ -41,7 +40,7 @@ func handleRequest(_ context.Context) error {
 	}
 	uc := usecase.NewFeedOnceUsecase(infrastructure.NewHtmlListFeedFetcher())
 	if err := uc.NotifyNewItems(feeds); err != nil {
-		log.Fatalf("failed to notify new items: %v", err)
+		return fmt.Errorf("failed to notify new items: %w", err)
 	}
 	return nil
 }

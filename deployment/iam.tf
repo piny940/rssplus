@@ -48,9 +48,9 @@ resource "aws_iam_role" "event_bridge_notify_once" {
     ]
   })
 }
-resource "aws_iam_role_policy_attachment" "event_bridge_notify_once_lambda_execute" {
+resource "aws_iam_role_policy_attachment" "event_bridge_notify_once_lambda_invoke" {
   role = aws_iam_role.event_bridge_notify_once.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambdaExecute"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaRole"
 }
 resource "aws_iam_role" "lambda_notify_once" {
   name = "rssplus_lambda_notify_once"
