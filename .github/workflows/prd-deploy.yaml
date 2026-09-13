@@ -19,7 +19,7 @@ jobs:
       - name: Build Lambda binary
         run: |
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-            go build -tags lambda.norpc -o deployment/build/bootstrap ./cmd/once
+            go build -tags lambda.norpc -o deployment/build/bootstrap ./cmd/lambda-once
           chmod +x deployment/build/bootstrap
         shell: bash
       - name: configure-aws-credentials
