@@ -72,3 +72,21 @@ resource "aws_iam_role_policy_attachment" "lambda_notify_once_lambda_basic" {
   role = aws_iam_role.lambda_notify_once.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
+resource "aws_iam_role_policy" "lambda_notify_once_dynamodb" {
+  name = "rssplus_lambda_notify_once_dynamodb"
+  role = aws_iam_role.lambda_notify_once.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+        ]
+        Effect   = "Allow"
+        Resource = aws_dynamodb_table.feed_items.arn
+      },
+    ]
+  })
+}

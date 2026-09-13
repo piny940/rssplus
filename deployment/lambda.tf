@@ -16,6 +16,12 @@ resource "aws_lambda_function" "notify_once" {
   memory_size = 512
   timeout     = 60
 
+  environment {
+    variables = {
+      FEED_ITEMS_TABLE_NAME = aws_dynamodb_table.feed_items.name
+    }
+  }
+
   architectures = ["x86_64"]
 }
 resource "aws_scheduler_schedule" "notify_once" {

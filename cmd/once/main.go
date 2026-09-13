@@ -1,13 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
 	"rssplus/cmd"
-	"rssplus/domain"
-	"rssplus/infrastructure"
-	"rssplus/usecase"
 
 	"go.yaml.in/yaml/v4"
 )
@@ -33,24 +31,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to decode config file: %v", err)
 	}
-	var feeds []domain.Feed
-	for _, f := range conf.Feeds {
-		switch f.Type {
-		case domain.FeedTypeXML:
-			feeds = append(feeds, &domain.XmlFeed{
-				Link: f.Link,
-			})
-		case domain.FeedTypeHTML:
-			feeds = append(feeds, &domain.HtmlListFeed{
-				Link:            f.Link,
-				LiSelector:      f.LiSelector,
-				TitleSelector:   f.TitleSelector,
-				ContentSelector: f.ContentSelector,
-			})
-		}
+	ctx := context.Background()
+	uc, err := cmd.NewFeedOnceUsecase(ctx)
+	if err != nil {
+		log.Fatalf("failed to initialize usecase: %v", err)
 	}
-	uc := usecase.NewFeedOnceUsecase(infrastructure.NewHtmlListFeedFetcher())
-	if err := uc.NotifyNewItems(feeds); err != nil {
+	if err := uc.NotifyNewItems(ctx, cmd.BuildFeeds(&conf)); err != nil {
 		log.Fatalf("failed to notify new items: %v", err)
 	}
 }

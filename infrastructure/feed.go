@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"rssplus/domain"
+	"strings"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -41,7 +42,7 @@ func NewHtmlListFeedFetcher() *HtmlListFeedFetcher {
 	return &HtmlListFeedFetcher{}
 }
 
-func (h *HtmlListFeedFetcher) GetItems(feed *domain.HtmlListFeed) (*domain.FeedItems, error) {
+func (h *HtmlListFeedFetcher) GetItems(feed *domain.HtmlListFeed) ([]*domain.HtmlListFeedItem, error) {
 	wait := initialRetryWait
 	for attempt := 1; ; attempt++ {
 		items, err := h.getItemsOnce(feed)
@@ -53,7 +54,7 @@ func (h *HtmlListFeedFetcher) GetItems(feed *domain.HtmlListFeed) (*domain.FeedI
 	}
 }
 
-func (h *HtmlListFeedFetcher) getItemsOnce(feed *domain.HtmlListFeed) (*domain.FeedItems, error) {
+func (h *HtmlListFeedFetcher) getItemsOnce(feed *domain.HtmlListFeed) ([]*domain.HtmlListFeedItem, error) {
 	req, err := http.NewRequest(http.MethodGet, feed.Link, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -74,11 +75,11 @@ func (h *HtmlListFeedFetcher) getItemsOnce(feed *domain.HtmlListFeed) (*domain.F
 	if err != nil {
 		return nil, fmt.Errorf("failed to get document: %w", err)
 	}
-	items := make([]*domain.FeedItem, 0)
+	items := make([]*domain.HtmlListFeedItem, 0)
 	doc.Find(feed.LiSelector).Each(func(i int, s *goquery.Selection) {
-		title := s.Find(feed.TitleSelector).Text()
-		content := s.Find(feed.ContentSelector).Text()
-		items = append(items, &domain.FeedItem{
+		title := strings.TrimSpace(s.Find(feed.TitleSelector).Text())
+		content := strings.TrimSpace(s.Find(feed.ContentSelector).Text())
+		items = append(items, &domain.HtmlListFeedItem{
 			Title:   title,
 			Content: content,
 		})
@@ -86,5 +87,5 @@ func (h *HtmlListFeedFetcher) getItemsOnce(feed *domain.HtmlListFeed) (*domain.F
 	if len(items) == 0 {
 		return nil, fmt.Errorf("%w: %q matched no element", ErrNoItemsFound, feed.LiSelector)
 	}
-	return &domain.FeedItems{Items: items}, nil
+	return items, nil
 }

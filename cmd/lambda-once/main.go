@@ -4,10 +4,7 @@ import (
 	"context"
 	"fmt"
 	"rssplus/cmd"
-	"rssplus/domain"
-	"rssplus/infrastructure"
 	"rssplus/samples"
-	"rssplus/usecase"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"go.yaml.in/yaml/v4"
@@ -17,29 +14,16 @@ func main() {
 	lambda.Start(handleRequest)
 }
 
-func handleRequest(_ context.Context) error {
+func handleRequest(ctx context.Context) error {
 	var conf cmd.Config
 	if err := yaml.Unmarshal(samples.Simple, &conf); err != nil {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
-	var feeds []domain.Feed
-	for _, f := range conf.Feeds {
-		switch f.Type {
-		case domain.FeedTypeXML:
-			feeds = append(feeds, &domain.XmlFeed{
-				Link: f.Link,
-			})
-		case domain.FeedTypeHTML:
-			feeds = append(feeds, &domain.HtmlListFeed{
-				Link:            f.Link,
-				LiSelector:      f.LiSelector,
-				TitleSelector:   f.TitleSelector,
-				ContentSelector: f.ContentSelector,
-			})
-		}
+	uc, err := cmd.NewFeedOnceUsecase(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to initialize usecase: %w", err)
 	}
-	uc := usecase.NewFeedOnceUsecase(infrastructure.NewHtmlListFeedFetcher())
-	if err := uc.NotifyNewItems(feeds); err != nil {
+	if err := uc.NotifyNewItems(ctx, cmd.BuildFeeds(&conf)); err != nil {
 		return fmt.Errorf("failed to notify new items: %w", err)
 	}
 	return nil

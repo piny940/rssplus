@@ -1,24 +1,17 @@
 package domain
 
-import "time"
-
-type FeedItem struct {
-	Title       string    `json:"title"`
-	Link        string    `json:"link"`
-	PublishedAt time.Time `json:"published_at"`
-	Content     string    `json:"content"`
-}
-
-type FeedItems struct {
-	Items []*FeedItem
-}
-
 type FeedType string
 
 const (
 	FeedTypeXML  FeedType = "xml"
 	FeedTypeHTML FeedType = "html"
 )
+
+type FeedID string
+
+type Feed interface {
+	ID() FeedID
+}
 
 type HtmlListFeed struct {
 	Link            string `json:"link"`
@@ -29,8 +22,12 @@ type HtmlListFeed struct {
 
 var _ Feed = &HtmlListFeed{}
 
+func (f *HtmlListFeed) ID() FeedID {
+	return FeedID(sha256Hex(string(FeedTypeHTML) + "\n" + f.Link))
+}
+
 type IHtmlListFeedFetcher interface {
-	GetItems(feed *HtmlListFeed) (*FeedItems, error)
+	GetItems(feed *HtmlListFeed) ([]*HtmlListFeedItem, error)
 }
 
 type XmlFeed struct {
@@ -39,5 +36,6 @@ type XmlFeed struct {
 
 var _ Feed = &XmlFeed{}
 
-type Feed interface {
+func (f *XmlFeed) ID() FeedID {
+	return FeedID(sha256Hex(string(FeedTypeXML) + "\n" + f.Link))
 }
